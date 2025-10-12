@@ -1,21 +1,27 @@
 package mnist;
 import javatorch.*;
 import java.io.*;
+import java.nio.ByteBuffer;
 
 public class MNIST {
-    public static String pathToMNIST;
+    public static String pathToMNIST = "data/train-images.idx3-ubyte";
+    public static String pathToMNISTLabels = "data/train-labels.idx1-ubyte";
     public static FileInputStream mnistFile;
-    public static int rows;
-    public static int cols;
-    public static int size;
+    public static FileInputStream mnistLabelFile;
+    public static int rows = 28;
+    public static int cols = 28;
+    public static int size = rows*cols;
+    public static int numClasses = 10;
     public static void main(String[] args) throws IOException {
         init();
         for (int num = 0; num < 5; num++) {
             byte[] buffer = new byte[size];
             readNextImageTo(buffer);
             showImage(buffer);
+            System.out.println(nextLabel());
         }
-        closeFile();
+
+        closeFiles();
     }
 
     public static void showImage(byte[] buffer) {
@@ -30,15 +36,10 @@ public class MNIST {
     }
 
     public static void init() throws IOException {
-        pathToMNIST = "data/train-images.idx3-ubyte";
-        
         mnistFile = new FileInputStream(pathToMNIST);
+        mnistLabelFile = new FileInputStream(pathToMNISTLabels);
         mnistFile.read(new byte[16]); // read metadata
-
-        rows = 28;
-        cols = 28;
-        size = rows*cols;
-        
+        mnistLabelFile.read(new byte[8]);
     }
 
     public static void readNextImageTo(byte[] buffer) throws IOException {
@@ -46,10 +47,39 @@ public class MNIST {
             mnistFile.read(buffer);
         } else {
             init();
+            mnistFile.read(buffer);
         }
     }
 
-    public static void closeFile() throws IOException {
+    public static int nextLabel() throws IOException {
+        if (mnistLabelFile.available() >= 1) {
+            return (int) mnistLabelFile.read();
+        } else {
+            init();
+            return (int) mnistLabelFile.read();
+        }
+    }
+
+    public static Matrix nextLabelOneHot() throws IOException {
+        Matrix out = new Matrix(1, numClasses);
+        int label = nextLabel();
+        for (int i = 0; i < numClasses; i++) {
+            out.data[0].data[i] = (i==label) ? 1. : 0.;
+        }
+        return out;
+    }
+
+    public static void readNextImageToMatrix(Matrix mat) throws IOException {
+        assert (mat.shape[0] == 1) && (mat.shape[1] == size) : String.format("Matrix size must be (1x%d)", size);
+        byte[] byteBuf = new byte[size];
+        readNextImageTo(byteBuf);
+        for (int i=0 ; i<size; i++) {
+            mat.data[0].data[i] = (double) (byteBuf[i] & 0xFF) / 256;
+        }
+    }
+
+    public static void closeFiles() throws IOException {
         mnistFile.close();
+        mnistLabelFile.close();
     }
 }
