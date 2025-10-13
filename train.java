@@ -1,4 +1,6 @@
 import java.io.IOException;
+import java.util.concurrent.Flow.Subscriber;
+
 import javatorch.*;
 import mnist.*;
 
@@ -9,35 +11,67 @@ public class train {
     public static int numClasses = 10;
 
     public static int hiddenDim = 20;
-    public static double lr = 3e-4;
+    public static double lr = 0.1;
     public static int numSteps = 1000;
     public static int gradAccumSteps = 4;
 
+    static Matrix w1;
+    static Matrix w2;
     public static void main(String[] args) throws IOException {
         // build model
-        Matrix w1 = new Matrix(size, hiddenDim);
-        Matrix w2 = new Matrix(hiddenDim, numClasses);
+        w1 = new Matrix(size, hiddenDim);
+        w2 = new Matrix(hiddenDim, numClasses);
+        w1._rand();
+        w2._rand();
 
         // get data
         MNIST.init();
         
         for (int step = 0; step < numSteps; step++) {
+            Matrix gradw1 = new Matrix(w1.shape[0], w1.shape[1]);
+            Matrix gradw2 = new Matrix(w2.shape[0], w2.shape[1]);
+            double lossAccum = 0.0;
             double t0 = System.nanoTime();
-            Matrix x = new Matrix(1, size);
-            MNIST.readNextImageToMatrix(x);
-            Matrix y = MNIST.nextLabelOneHot();
+            for (int gradAccumStep = 0; gradAccumStep < gradAccumSteps; gradAccumStep++) {
+                Matrix x = new Matrix(1, size); // 1, 784
+                MNIST.readNextImageToMatrix(x);
+                Matrix y = MNIST.nextLabelOneHot(); // 1, 10
 
-            Matrix l1preact = x.matmul(w1);
-            Matrix l1 = l1preact.tanh();
+                Matrix l1preact = x.matmul(w1); // 1, 784 x 784, 20 => 1, 20
+                Matrix l1 = l1preact.tanh(); // 1, 20
 
-            Matrix out = l1.matmul(w2);
-            Matrix diff = y.subtract(out);
+                Matrix out = l1.matmul(w2); // 1, 20 x 20, 10 => 1, 10
+                Matrix diff = y.subtract(out); // 1, 10
 
-            Matrix diff2 = diff.op(k -> Math.pow(k, 2));
-            double loss = diff2.sum() / diff2.numel();
-            System.out.printf("step %10d | loss %10.4f | time %10.4fs\n", step, loss, (System.nanoTime() - t0) / 1e+9);
+                Matrix diff2 = diff.op(k -> Math.pow(k, 2)); // 1, 10
+                double loss = diff2.sum() / diff2.numel(); // 1, 10
+
+                // gradients
+                Matrix ddiff2 = new Matrix(diff2.shape[0], diff2.shape[1]).op(k -> k+1. / diff2.numel()); // 1, 10
+                Matrix ddiff = ddiff2.multiply(diff.op(k -> k * 2.)); // 1, 10
+                Matrix dout = ddiff.op(k -> -k); // 1, 10
+                // dl1 should be 1, 20
+                // w2 is 20, 10 -- transposed is 10, 20
+                // dout is 1, 10
+                Matrix dl1 = dout.matmul(w2.transpose()); // 1, 20
+                // need 20, 10
+                // dout is 1, 10
+                Matrix dw2 = l1.transpose().matmul(dout);
+
+                Matrix dl1preact = dl1.tanhDerivative().multiply(dl1); // 1, 20
+                // x is 1, 784
+                // dl1preact is 1, 20
+                Matrix dw1 = x.transpose().matmul(dl1preact); // 784 * 20
+                
+                gradw1 = gradw1.add(dw1.op(k -> k / gradAccumSteps));
+                gradw2 = gradw2.add(dw2.op(k -> k / gradAccumSteps));
+                
+                lossAccum += loss / gradAccumSteps;
+            }
+            w1 = w1.subtract(gradw1.op(k -> k * lr));
+            w2 = w2.subtract(gradw2.op(k -> k * lr));
+            System.out.printf("step %10d | loss %10.4f | time %10.4fs\n", step, lossAccum, (System.nanoTime() - t0) / 1e+9);
         }
         
-
     }
 } 

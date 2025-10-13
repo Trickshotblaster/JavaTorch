@@ -2,8 +2,10 @@ package javatorch;
 import java.lang.Math;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
+import java.util.Random;
 
 public class Matrix {
+    Random random = new Random();
     public Vec[] data;
     public int[] shape;
 
@@ -108,6 +110,14 @@ public class Matrix {
         return out;
     }
     
+    public void _rand() {
+        for (int i=0; i < this.shape[0]; i++) {
+            for (int j=0; j < this.shape[1]; j++) {
+                this.data[i].data[j] = random.nextDouble() * 2. - 1.;
+            }
+        }
+    }
+
     public Matrix relationalOp(Matrix other, DoubleBinaryOperator op) {
         assert (this.shape[0] == other.shape[0]) && (this.shape[1] == other.shape[1]);
         Matrix out = new Matrix(this.shape[0], this.shape[1]);
@@ -148,7 +158,7 @@ public class Matrix {
     public Matrix sumRows() {
         Matrix out = new Matrix(1, this.shape[0]);
         for (int i = 0; i < this.data.length; i++) {
-            Vec row = this.data[i]
+            Vec row = this.data[i];
             double sum = 0.0;
             for (double val: row.data) {
                 sum += val;

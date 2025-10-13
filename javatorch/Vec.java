@@ -2,11 +2,9 @@
 
 package javatorch;
 
-import java.util.Random;
-
 public class Vec {
     public double[] data;
-    Random random = new Random();
+
 
     public Vec(double[] data) {
         this.data = data;
@@ -15,7 +13,7 @@ public class Vec {
     public Vec(int length) {
         this.data = new double[length];
         for (int i = 0; i < length; i++) {
-            this.data[i] = random.nextDouble() * 2. - 1.;
+            this.data[i] = 0.;
         }
     }
 
