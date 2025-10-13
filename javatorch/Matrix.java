@@ -145,6 +145,11 @@ public class Matrix {
         return relationalOp(other, (x, y) -> (x / y));
     }
 
+    public int argmax1Dim() {
+        assert this.shape[0] == 1;
+        return this.data[0].argmax();
+    }
+
     public double sum() {
         double sum = 0.0;
         for (Vec row: this.data) {

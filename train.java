@@ -72,6 +72,13 @@ public class train {
             w2 = w2.subtract(gradw2.op(k -> k * lr));
             System.out.printf("step %10d | loss %10.4f | time %10.4fs\n", step, lossAccum, (System.nanoTime() - t0) / 1e+9);
         }
-        
+    }
+
+    public static int getPrediction(Matrix x) {
+        Matrix l1preact = x.matmul(w1); // 1, 784 x 784, 20 => 1, 20
+        Matrix l1 = l1preact.tanh(); // 1, 20
+
+        Matrix out = l1.matmul(w2); // 1, 20 x 20, 10 => 1, 10
+        return out.argmax1Dim();
     }
 } 

@@ -5,7 +5,6 @@ package javatorch;
 public class Vec {
     public double[] data;
 
-
     public Vec(double[] data) {
         this.data = data;
     }
@@ -25,6 +24,18 @@ public class Vec {
             out += this.data[i] * other.data[i];
         }
         return out;
+    }
+
+    public int argmax() {
+        double max = this.data[0];
+        int idx = 0;
+        for (int i = 1; i < this.data.length; i++) {
+            if (this.data[i] > max) {
+                max = this.data[i];
+                idx = i;
+            }
+        }
+        return idx;
     }
 
     public String toString() {
