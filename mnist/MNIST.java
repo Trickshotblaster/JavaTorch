@@ -1,4 +1,5 @@
 package mnist;
+
 import javatorch.*;
 import java.io.*;
 import java.nio.ByteBuffer;
@@ -10,8 +11,9 @@ public class MNIST {
     public static FileInputStream mnistLabelFile;
     public static int rows = 28;
     public static int cols = 28;
-    public static int size = rows*cols;
+    public static int size = rows * cols;
     public static int numClasses = 10;
+
     public static void main(String[] args) throws IOException {
         init();
         for (int num = 0; num < 5; num++) {
@@ -26,9 +28,9 @@ public class MNIST {
 
     public static void showImage(byte[] buffer) {
         for (int i = 0; i < 28; i++) {
-                
+
             for (int j = 0; j < 28; j++) {
-                
+
                 System.out.printf("%4d", buffer[i * 28 + j] & 0xFF);
             }
             System.out.println();
@@ -64,7 +66,7 @@ public class MNIST {
         Matrix out = new Matrix(1, numClasses);
         int label = nextLabel();
         for (int i = 0; i < numClasses; i++) {
-            out.data[0].data[i] = (i==label) ? 1. : 0.;
+            out.data[0].data[i] = (i == label) ? 1. : 0.;
         }
         return out;
     }
@@ -73,7 +75,7 @@ public class MNIST {
         assert (mat.shape[0] == 1) && (mat.shape[1] == size) : String.format("Matrix size must be (1x%d)", size);
         byte[] byteBuf = new byte[size];
         readNextImageTo(byteBuf);
-        for (int i=0 ; i<size; i++) {
+        for (int i = 0; i < size; i++) {
             mat.data[0].data[i] = (double) (byteBuf[i] & 0xFF) / 256;
         }
     }

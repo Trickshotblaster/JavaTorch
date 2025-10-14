@@ -1,4 +1,5 @@
 package javatorch;
+
 import java.lang.Math;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
@@ -38,9 +39,9 @@ public class Matrix {
 
     public Matrix view(int rows, int cols) {
         /*
-        * if we have 15 elements and shape is 3 x 5,
-        * take chunks of 5 and concatenate into a matrix
-        */
+         * if we have 15 elements and shape is 3 x 5,
+         * take chunks of 5 and concatenate into a matrix
+         */
 
         Matrix out = new Matrix(rows, cols);
 
@@ -54,7 +55,7 @@ public class Matrix {
 
         return out;
     }
-    
+
     public Matrix transpose() {
         Matrix out = new Matrix(this.shape[1], this.shape[0]);
         for (int i = 0; i < this.shape[0]; i++) {
@@ -65,7 +66,7 @@ public class Matrix {
 
         return out;
     }
-    
+
     public Matrix matmul(Matrix other) {
         assert this.shape[1] == other.shape[0] : "inner shapes must match for matmul";
 
@@ -82,7 +83,7 @@ public class Matrix {
 
         return out;
     }
-    
+
     public String toString() {
         String out = "{\n";
         for (int i = 0; i < this.shape[0]; i++) {
@@ -93,7 +94,7 @@ public class Matrix {
     }
 
     public void _op(DoubleUnaryOperator op) {
-        for (int i = 0;  i < this.shape[0]; i++) {
+        for (int i = 0; i < this.shape[0]; i++) {
             for (int j = 0; j < this.shape[1]; j++) {
                 this.data[i].data[j] = op.applyAsDouble(this.data[i].data[j]);
             }
@@ -102,17 +103,17 @@ public class Matrix {
 
     public Matrix op(DoubleUnaryOperator op) {
         Matrix out = new Matrix(this.shape[0], this.shape[1]);
-        for (int i = 0;  i < this.shape[0]; i++) {
+        for (int i = 0; i < this.shape[0]; i++) {
             for (int j = 0; j < this.shape[1]; j++) {
                 out.data[i].data[j] = op.applyAsDouble(this.data[i].data[j]);
             }
         }
         return out;
     }
-    
+
     public void _rand() {
-        for (int i=0; i < this.shape[0]; i++) {
-            for (int j=0; j < this.shape[1]; j++) {
+        for (int i = 0; i < this.shape[0]; i++) {
+            for (int j = 0; j < this.shape[1]; j++) {
                 this.data[i].data[j] = random.nextDouble() * 2. - 1.;
             }
         }
@@ -152,8 +153,8 @@ public class Matrix {
 
     public double sum() {
         double sum = 0.0;
-        for (Vec row: this.data) {
-            for (double val: row.data) {
+        for (Vec row : this.data) {
+            for (double val : row.data) {
                 sum += val;
             }
         }
@@ -165,7 +166,7 @@ public class Matrix {
         for (int i = 0; i < this.data.length; i++) {
             Vec row = this.data[i];
             double sum = 0.0;
-            for (double val: row.data) {
+            for (double val : row.data) {
                 sum += val;
             }
             out.data[i].data[0] = sum;
@@ -179,10 +180,10 @@ public class Matrix {
     }
 
     public Matrix tanh() {
-        return (this.op(x -> (Math.exp(2.* x) - 1) / (Math.exp(2.*x) + 1)));
+        return (this.op(x -> (Math.exp(2. * x) - 1) / (Math.exp(2. * x) + 1)));
     }
 
     public Matrix tanhDerivative() {
-        return this.op(x -> (4*Math.exp(2.*x)) / Math.pow(Math.exp(2.*x) + 1, 2));
+        return this.op(x -> (4 * Math.exp(2. * x)) / Math.pow(Math.exp(2. * x) + 1, 2));
     }
 }

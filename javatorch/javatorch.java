@@ -2,8 +2,6 @@ package javatorch;
 
 import java.util.Random;
 
-
-
 public class javatorch {
     public static void main(String[] args) {
         // System.out.println("hello world\t\to");
@@ -25,5 +23,4 @@ public class javatorch {
         // System.out.println("A x B:");
         // System.out.println(C.toString());
     }
-}   
-
+}

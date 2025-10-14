@@ -1,5 +1,5 @@
 import java.io.IOException;
-import java.util.concurrent.Flow.Subscriber;
+//import java.util.concurrent.Flow.Subscriber;
 
 import javatorch.*;
 import mnist.*;
@@ -7,16 +7,19 @@ import mnist.*;
 public class train {
     public static int rows = 28;
     public static int cols = 28;
-    public static int size = rows*cols;
+    public static int size = rows * cols;
     public static int numClasses = 10;
 
     public static int hiddenDim = 20;
     public static double lr = 0.1;
-    public static int numSteps = 1000;
-    public static int gradAccumSteps = 4;
+    public static int numSteps = 2000;
+    public static int gradAccumSteps = 8;
+
+    public static int logEvery = 100;
 
     static Matrix w1;
     static Matrix w2;
+
     public static void main(String[] args) throws IOException {
         // build model
         w1 = new Matrix(size, hiddenDim);
@@ -26,7 +29,7 @@ public class train {
 
         // get data
         MNIST.init();
-        
+
         for (int step = 0; step < numSteps; step++) {
             Matrix gradw1 = new Matrix(w1.shape[0], w1.shape[1]);
             Matrix gradw2 = new Matrix(w2.shape[0], w2.shape[1]);
@@ -47,7 +50,7 @@ public class train {
                 double loss = diff2.sum() / diff2.numel(); // 1, 10
 
                 // gradients
-                Matrix ddiff2 = new Matrix(diff2.shape[0], diff2.shape[1]).op(k -> k+1. / diff2.numel()); // 1, 10
+                Matrix ddiff2 = new Matrix(diff2.shape[0], diff2.shape[1]).op(k -> k + 1. / diff2.numel()); // 1, 10
                 Matrix ddiff = ddiff2.multiply(diff.op(k -> k * 2.)); // 1, 10
                 Matrix dout = ddiff.op(k -> -k); // 1, 10
                 // dl1 should be 1, 20
@@ -62,15 +65,22 @@ public class train {
                 // x is 1, 784
                 // dl1preact is 1, 20
                 Matrix dw1 = x.transpose().matmul(dl1preact); // 784 * 20
-                
+
                 gradw1 = gradw1.add(dw1.op(k -> k / gradAccumSteps));
                 gradw2 = gradw2.add(dw2.op(k -> k / gradAccumSteps));
-                
+
                 lossAccum += loss / gradAccumSteps;
             }
             w1 = w1.subtract(gradw1.op(k -> k * lr));
             w2 = w2.subtract(gradw2.op(k -> k * lr));
-            System.out.printf("step %10d | loss %10.4f | time %10.4fs\n", step, lossAccum, (System.nanoTime() - t0) / 1e+9);
+            if (step % logEvery == 0) {
+                System.out.printf("step %10d | loss %10.4f | time %10.4fs\n", step, lossAccum,
+                        (System.nanoTime() - t0) / 1e+9);
+            }
+        }
+
+        for (int i = 0; i < 5; i++) {
+            showImagePredictionPair();
         }
     }
 
@@ -81,4 +91,19 @@ public class train {
         Matrix out = l1.matmul(w2); // 1, 20 x 20, 10 => 1, 10
         return out.argmax1Dim();
     }
-} 
+
+    public static void showImagePredictionPair() throws IOException {
+        Matrix x = new Matrix(1, size);
+        byte[] xbuf = new byte[size];
+        MNIST.readNextImageTo(xbuf);
+        for (int i = 0; i < size; i++) {
+            x.data[0].data[i] = (double) (xbuf[i] & 0xFF) / 256;
+        }
+
+        int label = MNIST.nextLabel();
+
+        int pred = getPrediction(x);
+        MNIST.showImage(xbuf);
+        System.out.printf("| REAL: %d | \t | Predicted: %d |\n", label, pred);
+    }
+}

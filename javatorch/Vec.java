@@ -1,5 +1,4 @@
 
-
 package javatorch;
 
 public class Vec {
@@ -50,4 +49,3 @@ public class Vec {
         return res;
     }
 }
-
