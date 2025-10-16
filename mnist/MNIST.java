@@ -1,9 +1,5 @@
 package mnist;
 
-import javatorch.*;
-import java.io.*;
-import java.nio.ByteBuffer;
-
 public class MNIST {
     public static int rows = 28;
     public static int cols = 28;
