@@ -1,5 +1,4 @@
 import java.io.IOException;
-//import java.util.concurrent.Flow.Subscriber;
 
 import javatorch.*;
 import mnist.*;
@@ -20,6 +19,12 @@ public class train {
     static Matrix w1;
     static Matrix w2;
 
+    public static DataLoader trainX;
+    public static DataLoader trainY;
+
+    public static DataLoader valX;
+    public static DataLoader valY;
+
     public static void main(String[] args) throws IOException {
         // build model
         w1 = new Matrix(size, hiddenDim);
@@ -28,7 +33,11 @@ public class train {
         w2._rand();
 
         // get data
-        MNIST.init();
+        trainX = new DataLoader("image", "data/train-images.idx3-ubyte");
+        trainY = new DataLoader("label", "data/train-labels.idx1-ubyte");
+
+        valX = new DataLoader("image", "data/t10k-images.idx3-ubyte");
+        valY = new DataLoader("label", "data/t10k-labels.idx1-ubyte");
 
         for (int step = 0; step < numSteps; step++) {
             Matrix gradw1 = new Matrix(w1.shape[0], w1.shape[1]);
@@ -37,8 +46,9 @@ public class train {
             double t0 = System.nanoTime();
             for (int gradAccumStep = 0; gradAccumStep < gradAccumSteps; gradAccumStep++) {
                 Matrix x = new Matrix(1, size); // 1, 784
-                MNIST.readNextImageToMatrix(x);
-                Matrix y = MNIST.nextLabelOneHot(); // 1, 10
+                trainX.readNextImageToMatrix(x);
+                Matrix y = new Matrix(1, numClasses);
+                trainY.readNextLabelToMatrix(y); // 1, 10
 
                 Matrix l1preact = x.matmul(w1); // 1, 784 x 784, 20 => 1, 20
                 Matrix l1 = l1preact.tanh(); // 1, 20
@@ -82,6 +92,12 @@ public class train {
         for (int i = 0; i < 5; i++) {
             showImagePredictionPair();
         }
+
+        System.out.printf("Validation Accuracy: %6.3f\n", getValAccuracy());
+        trainX.closeFile();
+        trainY.closeFile();
+        valX.closeFile();
+        valY.closeFile();
     }
 
     public static int getPrediction(Matrix x) {
@@ -95,15 +111,27 @@ public class train {
     public static void showImagePredictionPair() throws IOException {
         Matrix x = new Matrix(1, size);
         byte[] xbuf = new byte[size];
-        MNIST.readNextImageTo(xbuf);
+        trainX.readNextImageTo(xbuf);
         for (int i = 0; i < size; i++) {
             x.data[0].data[i] = (double) (xbuf[i] & 0xFF) / 256;
         }
 
-        int label = MNIST.nextLabel();
+        int label = trainY.nextLabel();
 
         int pred = getPrediction(x);
-        MNIST.showImage(xbuf);
+        MNIST.showImageAscii(xbuf);
         System.out.printf("| REAL: %d | \t | Predicted: %d |\n", label, pred);
+    }
+
+    public static double getValAccuracy() throws IOException {
+        double sum = 0;
+        int count = 0;
+        while (valX.hasNext()) {
+            count++;
+            Matrix x = new Matrix(1, size);
+            valX.readNextImageToMatrix(x);
+            sum += (getPrediction(x) == valY.nextLabel()) ? 1. : 0.;
+        }
+        return sum / count;
     }
 }
