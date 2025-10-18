@@ -9,6 +9,6 @@ git clone https://github.com/Trickshotblaster/JavaTorch/
 cd JavaTorch
 java .\train.java
 ```
-This will run the training script, which should achieve ~`0.05` final MSE loss in a couple of seconds, then display a few examples and their corresponding predictions, followed by a validation accuracy, which should be ~`0.6`.
+This will run the training script, which should achieve ~`0.025` final MSE loss in a couple of seconds, then display a few examples and their corresponding predictions, followed by a validation accuracy, which should be ~`0.91`.
 
 ![Output Example](image.png)

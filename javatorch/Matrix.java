@@ -1,3 +1,7 @@
+/*
+Matrix class, supports matmul and other functions
+*/
+
 package javatorch;
 
 import java.lang.Math;
@@ -6,16 +10,20 @@ import java.util.function.DoubleUnaryOperator;
 import java.util.Random;
 
 public class Matrix {
+    // random for _rand function
     Random random = new Random();
+    // need to store a list of values and their shape
     public Vec[] data;
     public int[] shape;
 
     public Matrix(Vec[] data) {
+        // if given an array of vectors, use them as data and their lengths as shape
         this.data = data;
         this.shape = new int[] { data.length, data[0].data.length };
     }
 
     public Matrix(int rows, int cols) {
+        // if given shape, zero-init
         this.data = new Vec[rows];
         for (int i = 0; i < rows; i++) {
             this.data[i] = new Vec(cols);
@@ -24,10 +32,12 @@ public class Matrix {
     }
 
     public int numel() {
+        // count number of elements in the matrix
         return this.shape[0] * this.shape[1];
     }
 
     public double[] flatten() {
+        // squish into 1 dimension
         double[] out = new double[this.shape[0] * this.shape[1]];
         for (int i = 0; i < this.shape[0]; i++) {
             for (int j = 0; j < this.shape[1]; j++) {
@@ -38,11 +48,7 @@ public class Matrix {
     }
 
     public Matrix view(int rows, int cols) {
-        /*
-         * if we have 15 elements and shape is 3 x 5,
-         * take chunks of 5 and concatenate into a matrix
-         */
-
+        // try to reconstruct (m x n) matrix from (mn) data
         Matrix out = new Matrix(rows, cols);
 
         double[] flattened = this.flatten();
@@ -57,6 +63,7 @@ public class Matrix {
     }
 
     public Matrix transpose() {
+        // loop through rows and cols and flip flop
         Matrix out = new Matrix(this.shape[1], this.shape[0]);
         for (int i = 0; i < this.shape[0]; i++) {
             for (int j = 0; j < this.shape[1]; j++) {
@@ -68,23 +75,26 @@ public class Matrix {
     }
 
     public Matrix matmul(Matrix other) {
+        // if A is (h x i) and B is (j x k), make sure i==j
         assert this.shape[1] == other.shape[0] : "inner shapes must match for matmul";
-
+        // out is (h x k)
         Matrix out = new Matrix(this.shape[0], other.shape[1]);
-
+        // dot product-ing the rows of A with the columns of B is the same as rows of A
+        // with rows of B.T
         Matrix transposed = other.transpose();
 
+        // do dot products
         for (int i = 0; i < this.shape[0]; i++) {
             for (int j = 0; j < other.shape[1]; j++) {
                 out.data[i].data[j] = this.data[i].dot(transposed.data[j]);
             }
-
         }
 
         return out;
     }
 
     public String toString() {
+        // toString for printing
         String out = "{\n";
         for (int i = 0; i < this.shape[0]; i++) {
             out += this.data[i].toString() + ",\n";
@@ -94,6 +104,7 @@ public class Matrix {
     }
 
     public void _op(DoubleUnaryOperator op) {
+        // apply elementwise function in-place
         for (int i = 0; i < this.shape[0]; i++) {
             for (int j = 0; j < this.shape[1]; j++) {
                 this.data[i].data[j] = op.applyAsDouble(this.data[i].data[j]);
@@ -102,6 +113,7 @@ public class Matrix {
     }
 
     public Matrix op(DoubleUnaryOperator op) {
+        // apply elementwise function and return new matrix
         Matrix out = new Matrix(this.shape[0], this.shape[1]);
         for (int i = 0; i < this.shape[0]; i++) {
             for (int j = 0; j < this.shape[1]; j++) {
@@ -112,6 +124,7 @@ public class Matrix {
     }
 
     public void _rand() {
+        // randomize the values of a matrix
         for (int i = 0; i < this.shape[0]; i++) {
             for (int j = 0; j < this.shape[1]; j++) {
                 this.data[i].data[j] = random.nextDouble() * 2. - 1.;
@@ -120,6 +133,8 @@ public class Matrix {
     }
 
     public Matrix relationalOp(Matrix other, DoubleBinaryOperator op) {
+        // perform elementwise operation between corresponding values of matrix A and B
+        // eg A[i, j] = op(A[i, j], B[i, j])
         assert (this.shape[0] == other.shape[0]) && (this.shape[1] == other.shape[1]);
         Matrix out = new Matrix(this.shape[0], this.shape[1]);
         for (int i = 0; i < this.shape[0]; i++) {
@@ -147,11 +162,13 @@ public class Matrix {
     }
 
     public int argmax1Dim() {
+        // just argmax the only vector
         assert this.shape[0] == 1;
         return this.data[0].argmax();
     }
 
     public double sum() {
+        // sum over all elements of the matrix
         double sum = 0.0;
         for (Vec row : this.data) {
             for (double val : row.data) {
@@ -162,14 +179,23 @@ public class Matrix {
     }
 
     public Matrix sumRows() {
-        Matrix out = new Matrix(1, this.shape[0]);
+        // return a row-wise sum of the matrix
+        /*
+         * eg
+         * [ [
+         * [0, 5, -2], [3],
+         * [-1, 3, 4], => [6],
+         * [2, 1, 3], [6],
+         * ] ]
+         */
+        Matrix out = new Matrix(this.shape[0], 1);
         for (int i = 0; i < this.data.length; i++) {
             Vec row = this.data[i];
             double sum = 0.0;
             for (double val : row.data) {
                 sum += val;
             }
-            out.data[i].data[0] = sum;
+            out.data[0].data[i] = sum;
         }
         return out;
     }
@@ -180,6 +206,7 @@ public class Matrix {
     }
 
     public Matrix tanh() {
+        // shortcut for tanh
         return (this.op(x -> (Math.exp(2. * x) - 1) / (Math.exp(2. * x) + 1)));
     }
 
