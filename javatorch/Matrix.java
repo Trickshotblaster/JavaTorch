@@ -213,4 +213,14 @@ public class Matrix {
     public Matrix tanhDerivative() {
         return this.op(x -> (4 * Math.exp(2. * x)) / Math.pow(Math.exp(2. * x) + 1, 2));
     }
+
+    public boolean equals(Matrix other) {
+        if (this.shape[0] != other.shape[0] || this.shape[1] != other.shape[1])
+            return false;
+        for (int i = 0; i < this.data.length; i++) {
+            if (!this.data[i].equals(other.data[i]))
+                return false;
+        }
+        return true;
+    }
 }

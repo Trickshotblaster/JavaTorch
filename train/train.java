@@ -1,3 +1,4 @@
+package train;
 /*
 Training code: trains a 2-layer MLP on the MNIST dataset with specified hyperparams
 */
@@ -21,8 +22,8 @@ public class train {
     // how often to log results
     public static int logEvery = 100;
     // parameters
-    static Matrix w1;
-    static Matrix w2;
+    public static Matrix w1;
+    public static Matrix w2;
     // train dataloaders
     public static DataLoader trainX;
     public static DataLoader trainY;
@@ -31,9 +32,27 @@ public class train {
     public static DataLoader valY;
 
     public static void main(String[] args) throws IOException {
+        run();
+        // show the fruits of our labor in ascii form
+        for (int i = 0; i < 5; i++) {
+            showImagePredictionPair();
+        }
+
+        // print out final accuracy
+        System.out.printf("Validation Accuracy: %6.3f\n", getValAccuracy());
+
+        // close all the files to be nice
+        trainX.closeFile();
+        trainY.closeFile();
+        valX.closeFile();
+        valY.closeFile();
+    }
+
+    public static void run() throws IOException {
         // build model, assign empty matrices to parameters then randomize
         w1 = new Matrix(size, hiddenDim);
         w2 = new Matrix(hiddenDim, numClasses);
+
         w1._rand();
         w2._rand();
 
@@ -122,45 +141,52 @@ public class train {
             }
         }
 
-        // show the fruits of our labor in ascii form
-        for (int i = 0; i < 5; i++) {
-            showImagePredictionPair();
-        }
-
-        // print out final accuracy
-        System.out.printf("Validation Accuracy: %6.3f\n", getValAccuracy());
-
-        // close all the files to be nice
-        trainX.closeFile();
-        trainY.closeFile();
-        valX.closeFile();
-        valY.closeFile();
+        
     }
 
-    public static int getPrediction(Matrix x) {
+    public static int getPrediction(Matrix in) {
         // runs a forward pass of the model on x and returns the highest probability
         // output
-        Matrix l1preact = x.matmul(w1); // [1, 784] x [784, 20] => [1, 20]
+        Matrix l1preact = in.matmul(w1); // [1, 784] x [784, 20] => [1, 20]
         Matrix l1 = l1preact.tanh(); // [1, 20]
 
         Matrix out = l1.matmul(w2); // [1, 20] x [20, 10] => [1, 10]
         return out.argmax1Dim();
     }
 
+    public static Matrix getProbs(Matrix in) {
+        Matrix l1preact = in.matmul(w1); // [1, 784] x [784, 20] => [1, 20]
+        Matrix l1 = l1preact.tanh(); // [1, 20]
+
+        Matrix out = l1.matmul(w2); // [1, 20] x [20, 10] => [1, 10]
+        Matrix exponentiated = out.op(k -> Math.exp(k));
+        return exponentiated.op(j -> j / exponentiated.sum());
+    }
+
+    public static Matrix getOutput(Matrix in) {
+        Matrix l1preact = in.matmul(w1); // [1, 784] x [784, 20] => [1, 20]
+        Matrix l1 = l1preact.tanh(); // [1, 20]
+
+        Matrix out = l1.matmul(w2); // [1, 20] x [20, 10] => [1, 10]
+        return out;
+    }
+
     public static void showImagePredictionPair() throws IOException {
         // get an input image (from bytes)
         Matrix x = new Matrix(1, size);
         byte[] xbuf = new byte[size];
-        trainX.readNextImageTo(xbuf);
+        valX.readNextImageTo(xbuf);
         // normalize and assign to x
         for (int i = 0; i < size; i++) {
             x.data[0].data[i] = (double) (xbuf[i] & 0xFF) / 256;
         }
         // get the label
-        int label = trainY.nextLabel();
+        int label = valY.nextLabel();
         // predict on x and display results
         int pred = getPrediction(x);
         MNIST.showImageAscii(xbuf);
+        System.out.println(getProbs(x).toString());
+        System.out.println(getOutput(x).toString());
         System.out.printf("| REAL: %d | \t | PREDICTED: %d |\n", label, pred);
     }
 

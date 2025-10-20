@@ -27,16 +27,16 @@ public class DataLoader {
         this.filePath = filePath;
         // load the file
         resetFile();
-        // how many bytes to read at a time? image -> 28*28, label -> 1
-        this.readSize = this.typeOf.equals("image") ? imageSize : 1;
-        // looking at metadata is for cowards; just move 16 bytes forward for idx3 and 8
-        // for idx1
-        this.file.read(new byte[(this.typeOf.equals("image") ? 16 : 8)]);
     }
 
     public void resetFile() throws IOException {
         // reset the fileinput stream
         this.file = new FileInputStream(this.filePath);
+        // how many bytes to read at a time? image -> 28*28, label -> 1
+        this.readSize = this.typeOf.equals("image") ? imageSize : 1;
+        // looking at metadata is for cowards; just move 16 bytes forward for idx3 and 8
+        // for idx1
+        this.file.read(new byte[(this.typeOf.equals("image") ? 16 : 8)]);
     }
 
     public boolean hasNext() throws IOException {
@@ -83,7 +83,7 @@ public class DataLoader {
         byte[] byteBuf = new byte[imageSize];
         readNextImageTo(byteBuf);
         for (int i = 0; i < imageSize; i++) {
-            mat.data[0].data[i] = (double) (byteBuf[i] & 0xFF) / 256;
+            mat.data[0].data[i] = (double) (byteBuf[i] & 0xFF) / 255;
         }
     }
 

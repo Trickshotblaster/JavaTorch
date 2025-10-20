@@ -44,6 +44,16 @@ public class Vec {
         return idx;
     }
 
+    public boolean equals(Vec other) {
+        if (other.data.length != this.data.length)
+            return false;
+        for (int i = 0; i < this.data.length; i++) {
+            if (this.data[i] != other.data[i])
+                return false;
+        }
+        return true;
+    }
+
     public String toString() {
         // toString method for printing
         String res = "{";
