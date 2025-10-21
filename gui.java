@@ -21,7 +21,7 @@ public class gui {
     public static JLabel predictionLabel;
     public static JLabel confidenceLabel;
 
-    public void main(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         train.run();
         JFrame frMain = new JFrame();
 
@@ -63,7 +63,7 @@ public class gui {
                                 
                                 int val = (int) (imageBuf.data[0].data[j] * 255);
                                 canvas.getComponent(j).setBackground(new Color(val, val, val));
-                            } catch (Exception _) {};
+                            } catch (Exception exc) {};
                         }
                         imageBuf.data[0].data[thisIndex] = 1.;
                         e.getComponent().setBackground(new Color(255, 255, 255));
@@ -94,7 +94,7 @@ public class gui {
         JButton clearButton = new JButton("Clear");
         clearButton.setSize(80, 10);
         predictionHolder.add(clearButton);
-        clearButton.addActionListener(_ -> clearCanvas());
+        clearButton.addActionListener(e -> clearCanvas());
         JPanel predictionPanel = new JPanel();
         predictionPanel.setLayout(new GridLayout(2, 1));
         predictionPanel.setSize(80, 40);
@@ -121,7 +121,7 @@ public class gui {
 
     }
 
-    public void clearCanvas() {
+    public static void clearCanvas() {
         MNIST.showImageMatrixAscii(imageBuf);
         System.out.println(train.getProbs(imageBuf).toString());
         System.out.println(train.getOutput(imageBuf).toString());
