@@ -35,10 +35,9 @@ public class train {
         String runId = (args.length > 0) ? args[0] : "Untitled";
         run(runId);
 
-        SaveLoad sl = new SaveLoad();
-        Matrix w1 = sl.readFromFile("models/" + runId + "/w1.txt");
-        Matrix w2 = sl.readFromFile("models/" + runId + "/w2.txt");
-        Matrix b = sl.readFromFile("models/" + runId + "/b.txt");
+        Matrix w1 = SaveLoad.readFromFile("models/" + runId + "/w1.txt");
+        Matrix w2 = SaveLoad.readFromFile("models/" + runId + "/w2.txt");
+        Matrix b = SaveLoad.readFromFile("models/" + runId + "/b.txt");
         // show the fruits of our labor in ascii form
         for (int i = 0; i < 5; i++) {
             showImagePredictionPair(w1, w2, b);

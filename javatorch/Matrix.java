@@ -8,7 +8,6 @@ import java.lang.Math;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 import java.util.Random;
-import java.util.Scanner;
 
 public class Matrix {
     // random for _rand function
@@ -236,6 +235,7 @@ public class Matrix {
     }
 
     public Matrix clone() {
+        // create a copy of the matrix
         Matrix out = new Matrix(this.shape[0], this.shape[1]);
         for (int i=0; i < this.shape[0]; i++) {
             for (int j = 0; j < this.shape[1]; j++) {
