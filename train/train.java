@@ -3,8 +3,8 @@ package train;
 Training code: trains a 2-layer MLP on the MNIST dataset with specified hyperparams
 */
 
+import java.io.File;
 import java.io.IOException;
-
 import javatorch.*;
 import mnist.*;
 
@@ -15,17 +15,15 @@ public class train {
     public static final int size = rows * cols;
     public static final int numClasses = 10;
     // hyperparams
-    public static final int hiddenDim = 20;
+    public static final int hiddenDim = 100;
     public static double lr = .8;
     public static double lr_final = 0.02;
-    public static int numSteps = 2000;
-    public static int gradAccumSteps = 16;
+    public static int numSteps = 10000;
+    public static int gradAccumSteps = 128;
     // how often to log results
     public static int logEvery = 100;
-    // parameters
-    public static Matrix w1;
-    public static Matrix w2;
-    public static Matrix b;
+    // smoothing for loss
+    public static double lossEMAFactor = 0.95;
     // train dataloaders
     public static DataLoader trainX;
     public static DataLoader trainY;
@@ -34,14 +32,21 @@ public class train {
     public static DataLoader valY;
 
     public static void main(String[] args) throws IOException {
-        run();
+        String runId = (args.length > 0) ? args[0] : "Untitled";
+        run(runId);
+
+        SaveLoad sl = new SaveLoad();
+        Matrix w1 = sl.readFromFile("models/" + runId + "/w1.txt");
+        Matrix w2 = sl.readFromFile("models/" + runId + "/w2.txt");
+        Matrix b = sl.readFromFile("models/" + runId + "/b.txt");
         // show the fruits of our labor in ascii form
         for (int i = 0; i < 5; i++) {
-            showImagePredictionPair();
+            showImagePredictionPair(w1, w2, b);
         }
 
         // print out final accuracy
-        System.out.printf("Validation Accuracy: %6.3f\n", getValAccuracy());
+        System.out.printf("Train Accuracy: %6.3f\n", getAccuracy(trainX, trainY, w1, w2, b));
+        System.out.printf("Validation Accuracy: %6.3f\n", getAccuracy(valX, valY, w1, w2, b));
 
         // close all the files to be nice
         trainX.closeFile();
@@ -50,11 +55,11 @@ public class train {
         valY.closeFile();
     }
 
-    public static void run() throws IOException {
+    public static void run(String runId) throws IOException {
         // build model, assign empty matrices to parameters then randomize
-        w1 = new Matrix(size, hiddenDim);
-        w2 = new Matrix(hiddenDim, numClasses);
-        b = new Matrix(1, hiddenDim);
+        Matrix w1 = new Matrix(size, hiddenDim);
+        Matrix w2 = new Matrix(hiddenDim, numClasses);
+        Matrix b = new Matrix(1, hiddenDim);
 
         w1._rand();
         w2._rand();
@@ -74,6 +79,7 @@ public class train {
         valX = new DataLoader("image", "data/t10k-images.idx3-ubyte");
         valY = new DataLoader("label", "data/t10k-labels.idx1-ubyte");
 
+        double lossEMA = 0.0;
         // training loop
         for (int step = 0; step < numSteps; step++) {
             // initialize empty gradients for grad accum
@@ -148,23 +154,33 @@ public class train {
                 lossAccum += loss / gradAccumSteps;
             }
             // lr schedule
-            lr = lr_final + (lr - lr_final) * (1 + Math.cos((step+1)*Math.PI / numSteps)) / (1 + Math.cos(step*Math.PI / numSteps));
+            lr = lr_final + (lr - lr_final) * (1 + Math.cos((step + 1) * Math.PI / numSteps))
+                    / (1 + Math.cos(step * Math.PI / numSteps));
             // parameter updates
             w1 = w1.subtract(gradw1.op(k -> k * lr));
             w2 = w2.subtract(gradw2.op(k -> k * lr));
             b = b.subtract(gradb.op(k -> k * lr));
+
+            // track exponential moving average of loss
+            lossEMA = (step == 0) ? lossAccum : lossEMA * lossEMAFactor + lossAccum * (1 - lossEMAFactor);
+
             // log
             if (step % logEvery == 0) {
-                System.out.printf("step %10d | loss %10.4f | time %10.4fs | lr %10.4f |\n", step, lossAccum,
+                System.out.printf("step %10d | loss %10.4f | smooth loss: %10.4f | time %10.4fs | lr %10.4f |\n", step,
+                        lossAccum, lossEMA,
                         (System.nanoTime() - t0) / 1e+9, lr);
             }
-            
-        }
 
-        
+        }
+        SaveLoad sl = new SaveLoad();
+        File baseDir = new File("models/" + runId);
+        baseDir.mkdirs();
+        sl.saveToFile(w1, "models/" + runId + "/w1.txt");
+        sl.saveToFile(w2, "models/" + runId + "/w2.txt");
+        sl.saveToFile(b, "models/" + runId + "/b.txt");
     }
 
-    public static int getPrediction(Matrix in) {
+    public static int getPrediction(Matrix in, Matrix w1, Matrix w2, Matrix b) {
         // runs a forward pass of the model on x and returns the highest probability
         // output
         Matrix l1preact = in.matmul(w1); // [1, 784] x [784, 20] => [1, 20]
@@ -177,7 +193,7 @@ public class train {
         return out.argmax1Dim();
     }
 
-    public static Matrix getProbs(Matrix in) {
+    public static Matrix getProbs(Matrix in, Matrix w1, Matrix w2, Matrix b) {
         // output
         Matrix l1preact = in.matmul(w1); // [1, 784] x [784, 20] => [1, 20]
         // add bias
@@ -190,7 +206,7 @@ public class train {
         return exponentiated.op(j -> j / exponentiated.sum());
     }
 
-    public static Matrix getOutput(Matrix in) {
+    public static Matrix getOutput(Matrix in, Matrix w1, Matrix w2, Matrix b) {
         // runs a forward pass of the model on x and returns the highest probability
         // output
         Matrix l1preact = in.matmul(w1); // [1, 784] x [784, 20] => [1, 20]
@@ -203,7 +219,7 @@ public class train {
         return out;
     }
 
-    public static void showImagePredictionPair() throws IOException {
+    public static void showImagePredictionPair(Matrix w1, Matrix w2, Matrix b) throws IOException {
         // get an input image (from bytes)
         Matrix x = new Matrix(1, size);
         byte[] xbuf = new byte[size];
@@ -215,23 +231,23 @@ public class train {
         // get the label
         int label = valY.nextLabel();
         // predict on x and display results
-        int pred = getPrediction(x);
+        int pred = getPrediction(x, w1, w2, b);
         MNIST.showImageAscii(xbuf);
-        System.out.println(getProbs(x).toString());
-        System.out.println(getOutput(x).toString());
+        System.out.println(getProbs(x, w1, w2, b).toString());
+        System.out.println(getOutput(x, w1, w2, b).toString());
         System.out.printf("| REAL: %d | \t | PREDICTED: %d |\n", label, pred);
     }
 
-    public static double getValAccuracy() throws IOException {
+    public static double getAccuracy(DataLoader xs, DataLoader ys, Matrix w1, Matrix w2, Matrix b) throws IOException {
         // initialize count and sum to 0
         double sum = 0;
         int count = 0;
         // loop through validation set and add 1 to sum only if correct
-        while (valX.hasNext()) {
+        while (xs.hasNext()) {
             count++;
             Matrix x = new Matrix(1, size);
-            valX.readNextImageToMatrix(x);
-            sum += (getPrediction(x) == valY.nextLabel()) ? 1. : 0.;
+            xs.readNextImageToMatrix(x);
+            sum += (getPrediction(x, w1, w2, b) == ys.nextLabel()) ? 1. : 0.;
         }
         // get average
         return sum / count;

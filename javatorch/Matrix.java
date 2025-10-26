@@ -8,6 +8,7 @@ import java.lang.Math;
 import java.util.function.DoubleBinaryOperator;
 import java.util.function.DoubleUnaryOperator;
 import java.util.Random;
+import java.util.Scanner;
 
 public class Matrix {
     // random for _rand function
@@ -222,5 +223,25 @@ public class Matrix {
                 return false;
         }
         return true;
+    }
+
+    public String formatSave() {
+        // for writing to file
+        String out = this.shape[0] + " " + this.shape[1] + " \n";
+        for (Vec row : this.data) {
+            for (int i = 0; i < this.shape[1]; i++)
+                out += row.data[i] + ((i == this.shape[1] - 1) ? "\n" : " ");
+        }
+        return out;
+    }
+
+    public Matrix clone() {
+        Matrix out = new Matrix(this.shape[0], this.shape[1]);
+        for (int i=0; i < this.shape[0]; i++) {
+            for (int j = 0; j < this.shape[1]; j++) {
+                out.data[i].data[j] = this.data[i].data[j];
+            }
+        }
+        return out;
     }
 }
