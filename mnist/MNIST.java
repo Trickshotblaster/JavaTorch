@@ -104,24 +104,24 @@ public class MNIST {
         }
 
         if (bottomShift > 0) {
-            for (int i = rows-1; i > bottomShift; i--) {
+            for (int i = rows - 1; i > bottomShift; i--) {
                 for (int j = 0; j < cols; j++) {
                     out.data[0].data[i * cols + j] = out.data[0].data[(i - bottomShift) * cols + j];
                 }
             }
-            for (int i=0; i <= bottomShift; i++) {
-                for (int j=0; j < cols; j++) {
+            for (int i = 0; i <= bottomShift; i++) {
+                for (int j = 0; j < cols; j++) {
                     out.data[0].data[i * cols + j] = 0.;
                 }
             }
         } else {
-            for (int i = 0; i < cols-Math.abs(bottomShift); i++) {
+            for (int i = 0; i < cols - Math.abs(bottomShift); i++) {
                 for (int j = 0; j < cols; j++) {
                     out.data[0].data[i * cols + j] = out.data[0].data[(i + Math.abs(bottomShift)) * cols + j];
                 }
             }
-            for (int i=cols-1; i >= cols-Math.abs(bottomShift); i--) {
-                for (int j=0; j < cols; j++) {
+            for (int i = cols - 1; i >= cols - Math.abs(bottomShift); i--) {
+                for (int j = 0; j < cols; j++) {
                     out.data[0].data[i * cols + j] = 0.;
                 }
             }

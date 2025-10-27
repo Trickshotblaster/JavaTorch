@@ -61,7 +61,8 @@ public class gui {
             pan.setName(Integer.toString(i));
             pan.setBackground(new Color(0, 0, 0));
             pan.setSize(pixelSize, pixelSize);
-            // add mouse listener to each pixel (very bad but doesn't seem to work otherwise and perf is fine)
+            // add mouse listener to each pixel (very bad but doesn't seem to work otherwise
+            // and perf is fine)
             pan.addMouseListener(new MouseAdapter() {
                 public void mouseEntered(MouseEvent e) {
                     if (down) {

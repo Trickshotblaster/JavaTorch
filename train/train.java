@@ -171,12 +171,11 @@ public class train {
             }
 
         }
-        SaveLoad sl = new SaveLoad();
         File baseDir = new File("models/" + runId);
         baseDir.mkdirs();
-        sl.saveToFile(w1, "models/" + runId + "/w1.txt");
-        sl.saveToFile(w2, "models/" + runId + "/w2.txt");
-        sl.saveToFile(b, "models/" + runId + "/b.txt");
+        SaveLoad.saveToFile(w1, "models/" + runId + "/w1.txt");
+        SaveLoad.saveToFile(w2, "models/" + runId + "/w2.txt");
+        SaveLoad.saveToFile(b, "models/" + runId + "/b.txt");
     }
 
     public static int getPrediction(Matrix in, Matrix w1, Matrix w2, Matrix b) {
