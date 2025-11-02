@@ -15,9 +15,6 @@ public class Vec {
     public Vec(int length) {
         // if we are given a length, zero-init
         this.data = new double[length];
-        for (int i = 0; i < length; i++) {
-            this.data[i] = 0.;
-        }
     }
 
     public double dot(Vec other) {
