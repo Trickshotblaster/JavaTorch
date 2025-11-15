@@ -2,9 +2,11 @@
 
 A poorly-named MNIST handwritten digit recognizer written in java with no dependencies.
 
+# [Read the Blog Post Here](https://bhoener.github.io/posts/Java-MNIST-from-scratch)
+
 ## Installation
 ```shell
-git clone https://github.com/Trickshotblaster/JavaTorch/
+git clone https://github.com/bhoener/JavaTorch/
 cd JavaTorch
 ```
 ## Use
